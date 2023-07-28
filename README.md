@@ -22,6 +22,6 @@ catch **black swan** events and use them in the estimation of possible futures.
 
 ## Sources
 
-[Impractical Python Projects]()  
+[Impractical Python Projects](https://nostarch.com/impracticalpythonprojects)  
 [Automating Google Colab](https://www.linkedin.com/pulse/automating-tasks-google-colab-step-by-step-guide-using-nick-gupta/)  
 [Monte Carlo Method](https://en.wikipedia.org/wiki/Monte_Carlo_method)  
