@@ -1,3 +1,4 @@
+import ctypes
 import numpy as np
 import pandas as pd
 import yfinance as yf
@@ -16,6 +17,8 @@ MIN_HOLD     = 60
 MAX_HOLD     = 365
 CUT_OFF_DATE = date(2024, 4, 13)
 
+def message_box(title, text, style):
+  return ctypes.windll.user32.MessageBoxW(0, text, title, style)
 
 def compute_returns(prices):
   differences = np.diff(prices).tolist()
@@ -96,7 +99,13 @@ def bankrupt_prob(outcome, bankrupt_count, median_hold, action):
   print("Max outcome: ${:,}".format(max_out))
   print("Earnings at risk: ${:,}".format(loss))
   print("Action: {}".format(action))
-  return odds
+  
+  m1 = "\nInitial investments = " + str(START_VALUE)
+  m2 = "\nOdds of ruin = " + str(odds)
+  m3 = "\nEarnings at risk = " + str(loss)
+  m4 = "\nAction = " + str(action)
+  message = m1 + m2 + m3 + m4
+  return message
 
 
 def read_etf_data(etf):
@@ -114,6 +123,7 @@ def main():
   median_hold = compute_median_hold(CUT_OFF_DATE)
   outcome, bankrupt_count = montecarlo(returns, median_hold)
   odds = bankrupt_prob(outcome, bankrupt_count, median_hold, action)
+  message_box('Trading bot', odds, 1)
 
 
 if __name__ == '__main__':
