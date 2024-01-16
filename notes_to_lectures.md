@@ -163,18 +163,67 @@ With seasonal data you need to difference data twice: seasonal differencing
 and de-trending to make the series stationary. In some cases, seasonal may be
 enough to make the series stationary.
 
+Non-seasonal component matters to the model too. One has to look at the ACF and
+PACF plots over the first few lags which are less than the seasonal period to
+assess what non-seasonal terms might work.
+
+## 5. Smoothing and Decomposition methods
 
 
 
+## 11. Vector autoregression and ARCH models
 
+### 11.1 ARCH models
 
+An **ARCH** model is a model for the variance of time series used to describe a
+changing possibly volatile variance. ARCH models are best suitable in situations
+in which there may be short periods of increased variation.
 
+The ARCH(1) model for the variance of model $y_t$ that depends on $y_{t-1}$ is:
 
+$$Var(y_t | y_{t-1}) = \sigma_t^2 = \alpha_0 + \alpha_1 \times y_{t-1}^2$$
 
+Constraints: $\alpha_0 \geq 0$ and $\alpha_1 \geq 0$ to avoid negative variance.
 
+The variance at time $t$ is connected to the value of the series at time $t-1$.
+A relatively large value of the level of a series at $t-1$ gives a relatively
+large valuye of the variance at time $t$. This means that the value of $y_t$ is
+less predictable at time $t-1$ than at times after a relatively small value of
+$y_{t-1}^2$.
 
+Assuming that the series has mean 0, which can be done by centering, the ARCH
+model can be written as:
 
+$$y_t = \sigma_t \times \epsilon_t$$
 
+where:
 
+$$\sigma_t = \sqrt{\alpha_0 + \alpha_1 \times y_{t-1}^2}$$
 
+$$\epsilon_t \overset{iid}{\sim} N(\mu = 0, \sigma^2 = 1) $$
+
+Properties:
+
+- the model is causal, meaning it can be converted to an infinite order MA only
+  when $\alpha_1^2 < \frac{1}{3}$
+
+- $y_t$ is white noise when $0 \leq \alpha_1 \leq 1$
+
+Plotting the ACF of a time series with changing variance does not show any
+significant lags, so the series looks to be white noise. The PACF can have a
+single spike at some lag suggesting an AR(lag) model for the squared series.
+
+A **GARCH** model uses values of the past squared observations and past variance
+to model the variance at time $t$. An example of GARCH(1, 1):
+
+$$\sigma_t^2 = \alpha_0 + \alpha_1 \times y_{t-1}^2 + \beta_1 \times \sigma_{t-1}^2 $$
+
+The best identification tool may be a time series plot of the series. Looking
+at the ACF and the PACF of both $y_t$ and $y_t^2$. For instance, if $y_t$ appears
+to be white noise and $y_t^2$ appears to be AR(1) then an ARCH(1) model for the
+variance is suggested. 
+
+GARCH models may be suggested by an ARMA type look to the ACF and PACF of $y_t^2$.
+In practice, a set of experiments with various structure of the model may be
+required to determine the best one.
 
