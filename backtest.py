@@ -1,54 +1,41 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# backtest.py
-
-from __future__ import print_function
-
 import datetime
-import pprint
 import queue
-import time
 
 class backtest(object):
-  
-  def __init__(self, csv_dir, symbol_list, initial_capital,heartbeat, start_date,
-               data_handler, execution_handler, portfolio, strategy):    
-    self.csv_dir = csv_dir
-    self.symbol_list = symbol_list
-    self.initial_capital = initial_capital
-    self.heartbeat = heartbeat
-    self.start_date = start_date
+  def __init__(self, tickers, folder, start, init_cap, handler, portfolio, strategy):
+    self.tickers  = tickers
+    self.folder   = folder
+    self.start    = start
+    self.init_cap = init_cap
 
-    self.data_handler_cls = data_handler
-    self.execution_handler_cls = execution_handler
+    self.handler_cls   = handler
     self.portfolio_cls = portfolio
-    self.strategy_cls = strategy
+    self.strategy_cls  = strategy
+
+    self.signal_list  = {}
+    self.signal_count = 0
 
     self.events = queue.Queue()
-    
-    self.signals = 0
-    self.orders = 0
-    self.fills = 0
-    self.num_strats = 1
-   
-    self._generate_trading_instances()
-
-  def _generate_trading_instances(self):
-    self.data_handler = self.data_handler_cls(self.events, self.csv_dir, self.symbol_list)
-    self.strategy = self.strategy_cls(self.data_handler, self.events)
-    self.portfolio = self.portfolio_cls(self.data_handler, self.events, self.start_date, self.initial_capital)
-    self.execution_handler = self.execution_handler_cls(self.events)
-
+    self._generate_instances()
+  
+  def _generate_instances(self):
+    self.handler   = self.handler_cls(self.events, self.folder, self.tickers, self.start)
+    self.strategy  = self.strategy_cls(self.events, self.handler)
+    self.portfolio = self.portfolio_cls(self.events, self.handler, self.start, self.init_cap)
+  
+  def run_simulation(self):
+    self._run_backtest()
+    self._generate_results()
+  
   def _run_backtest(self):
-    i = 0
     while True:
-      i += 1
-      if self.data_handler.continue_backtest == True:
-        self.data_handler.update_bars()
+      if self.handler.continue_backtest == True:
+        self.handler.update_bars()
       else:
         break
-
       while True:
         try:
           event = self.events.get(False)
@@ -57,37 +44,10 @@ class backtest(object):
         else:
           if event is not None:
             if event.type == 'market':
-              self.strategy.calculate_signals(event)
-              self.portfolio.update_timeindex(event)
-
-            elif event.type == 'signal':
-              self.signals += 1                            
+              self.strategy.calculate_signal(event)
+              self.portfolio.update_data(event)
+            if event.type == 'signal':
               self.portfolio.update_signal(event)
-
-            elif event.type == 'order':
-              self.orders += 1
-              self.execution_handler.execute_order(event)
-
-            elif event.type == 'fill':
-              self.fills += 1
-              self.portfolio.update_fill(event)
-
-      time.sleep(self.heartbeat)
-
-  def _output_performance(self):
-    self.portfolio.create_equity_curve_dataframe()
-    
-    print("Creating summary stats...")
-    stats = self.portfolio.output_summary_stats()
-    
-    print("Creating equity curve...")
-    print(self.portfolio.equity_curve.tail(10))
-    pprint.pprint(stats)
-
-    print("Signals: %s" % self.signals)
-    print("Orders: %s" % self.orders)
-    print("Fills: %s" % self.fills)
-
-  def simulate_trading(self):
-    self._run_backtest()
-    self._output_performance()
+  
+  def _generate_results(self):
+    pass

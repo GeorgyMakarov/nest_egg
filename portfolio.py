@@ -1,156 +1,86 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# portfolio.py
-
-from __future__ import print_function
-
 import datetime
 import queue
 
-from math import floor
-import math
-
-import numpy  as np
+import numpy as np
 import pandas as pd
 
-from event import fill_event
-from event import order_event
-
-from performance import create_sharpe_ratio
-from performance import create_drawdowns
-
+from math import floor
 
 class portfolio(object):
-  def __init__(self, bars, events, start_date, initial_capital):
-    self.bars        = bars
-    self.events      = events
-    self.symbol_list = self.bars.symbol_list
-    self.start_date  = start_date
-    self.initial_capital = initial_capital
+  def __init__(self, events, handler, start, init_cap):
+    self.events   = events
+    self.handler  = handler
+    self.start    = start
+    self.init_cap = init_cap
+    self.tickers  = self.handler.tickers
 
-    self.all_positions     = self.construct_all_positions()
-    self.current_positions = dict((k, v) for k, v \
-                                  in [(s, 0) for s in self.symbol_list])
-    
-    self.all_holdings     = self.construct_all_holdings()
-    self.current_holdings = self.construct_current_holdings()
-
-  def construct_all_positions(self):
-    d = dict((k, v) for k, v in [(s, 0) for s in self.symbol_list])
-    d['datetime'] = self.start_date
+    self.all_pos  = self._make_all_pos()
+    self.cur_pos  = self._make_cur_pos()
+    self.all_hold = self._make_all_hold()
+    self.cur_hold = self._make_cur_hold()
+  
+  def _make_all_pos(self):
+    d = dict((k, v) for k, v in [(s, 0) for s in self.tickers])
+    d['datetime'] = self.start
     return [d]
   
-  def construct_all_holdings(self):
-    d = dict((k, v) for k, v in [(s, 0.0) for s in self.symbol_list])
-    d['datetime']  = self.start_date
-    d['cash']      = self.initial_capital
-    d['commission'] = 0.0
-    d['total']     = self.initial_capital
-    return [d]
-  
-  def construct_current_holdings(self):
-    d = dict((k, v) for k, v in [(s, 0.0) for s in self.symbol_list])
-    d['cash']      = self.initial_capital
-    d['commission'] = 0.0
-    d['total']     = self.initial_capital
+  def _make_cur_pos(self):
+    d = dict((k, v) for k, v in [(s, 0) for s in self.tickers])
     return d
   
-  def update_timeindex(self, event):
-    latest_datetime = self.bars.get_latest_bar_datetime(self.symbol_list[0])
-    dp = dict((k, v) for k, v in [(s, 0) for s in self.symbol_list])
-    dp['datetime'] = latest_datetime
-    for s in self.symbol_list:
-      dp[s] = self.current_positions[s]
-    self.all_positions.append(dp)
-    dh = dict((k, v) for k, v in [(s, 0) for s in self.symbol_list])
-    dh['datetime'] = latest_datetime
-    dh['cash'] = self.current_holdings['cash']
-    dh['commission'] = self.current_holdings['commission']
-    dh['total'] = self.current_holdings['cash']
+  def _make_all_hold(self):
+    d = dict((k, v) for k, v in [(s, 0) for s in self.tickers])
+    d['datetime']  = self.start
+    # Simplified balance sheet
+    d['inventory'] = 0.0
+    d['cash']      = self.init_cap
+    d['capital']   = self.init_cap
+    d['profit']    = 0.0
+    return [d]
+  
+  def _make_cur_hold(self):
+    d = dict((k, v) for k, v in [(s, 0) for s in self.tickers])
+    d['inventory'] = 0.0
+    d['cash']      = self.init_cap
+    d['capital']   = self.init_cap
+    d['profit']    = 0.0
+    return d
+  
+  def update_data(self, event):
+    dp = dict((k, v) for k, v in [(s, 0) for s in self.tickers])
+    dp['datetime'] = self.handler.current_date
+    for s in self.tickers:
+      dp[s] = self.cur_pos[s]
+    self.all_pos.append(dp)
+    print(self.all_pos)
 
-    for s in self.symbol_list:
-      market_value = self.current_positions[s] *\
-                     self.bars.get_latest_bar_value(s, 'adj_close')
-      dh[s] = market_value
-      dh['total'] += market_value
-    
-    self.all_holdings.append(dh)
-  
-  def update_positions_from_fill(self, fill):
-    fill_dir = 0
-    if fill.direction == 'buy':
-      fill_dir = 1
-    if fill.direction == 'sell':
-      fill_dir = 0
-    self.current_positions[fill.symbol] += fill_dir * fill.quantity
-  
-  def update_holdings_from_fill(self, fill):
-    fill_dir = 0
-    if fill.direction == 'buy':
-      fill_dir = 1
-    if fill.direction == 'sell':
-      fill_dir = 0
-    fill_cost = self.bars.get_latest_bar_value(fill.symbol, 'adj_close')
-    cost = fill_dir * fill_cost * fill.quantity
-    self.current_holdings[fill.symbol] += cost
-    self.current_holdings['commission'] += fill.commission
-    self.current_holdings['cash'] -= (cost + fill.commission)
-    self.current_holdings['total'] -= (cost + fill.commission)
-  
-  def update_fill(self, event):
-    if event.type == 'fill':
-      self.update_positions_from_fill(event)
-      self.update_holdings_from_fill(event)
-  
+  def _compute_qty(self, ticker, price):
+    res   = 0.0
+    cash  = self.cur_hold['cash']
+    min_cost  = 3.76
+    norm_cost = 0.08 / 100
+    # Use comission value that is higher by choosing the
+    # available quantity that is lower
+    q1 = floor((cash - min_cost) / price)
+    q2 = floor(cash / (price + norm_cost))
 
-  def generate_naive_order(self, signal):
-    order = None
-    symbol = signal.symbol
-    direction = signal.signal_type
-    strength = signal.strength
 
-    mkt_quantity = 100
-    cur_quantity = self.current_positions[symbol]
-    order_type = 'MKT'
 
-    if direction == 'long' and cur_quantity == 0:
-      order = order_event(symbol, order_type, mkt_quantity, 'buy')
-    if direction == 'short' and cur_quantity == 0:
-      order = order_event(symbol, order_type, mkt_quantity, 'sell')   
-  
-    if direction == 'exit' and cur_quantity > 0:
-      order = order_event(symbol, order_type, abs(cur_quantity), 'sell')
-    if direction == 'exit' and cur_quantity < 0:
-      order = order_event(symbol, order_type, abs(cur_quantity), 'buy')
-    return order
+
+    return res
+
 
   def update_signal(self, event):
-    if event.type == 'signal':
-      order_event = self.generate_naive_order(event)
-      self.events.put(order_event)
+    direct  = event.sig_type
+    ticker  = event.ticker
+    price   = event.price
+    cur_qty = self.cur_pos[ticker]
+    if direct == 'long' and cur_qty == 0:
+      trans_qty, comission = self._compute_qty(ticker, price)
+      print(f"Date: {event.dt}, type: {event.sig_type}, trans_qty: {trans_qty}")
 
-  def create_equity_curve_dataframe(self):
-    curve = pd.DataFrame(self.all_holdings)
-    curve.set_index('datetime', inplace=True)
-    curve['returns'] = curve['total'].pct_change()
-    curve['equity_curve'] = (1.0 + curve['returns']).cumprod()
-    self.equity_curve = curve
-
-  def output_summary_stats(self):
-    total_return = self.equity_curve['equity_curve'][-1]
-    returns      = self.equity_curve['returns']
-    pnl = self.equity_curve['equity_curve']
-
-    sharpe_ratio = create_sharpe_ratio(returns, periods=252)
-    drawdown, max_dd, dd_duration = create_drawdowns(pnl)
-    self.equity_curve['drawdown'] = drawdown
-
-    if math.isnan(dd_duration):
-      dd_duration = 0
-
-    stats = [("Total Return", "%0.2f%%" % ((total_return - 1.0) * 100.0)),
-             ("Sharpe Ratio", "%0.2f" % sharpe_ratio),
-             ("Max Drawdown", "%0.2f%%" % (max_dd * 100.0)),
-             ("Drawdown Duration", "%d" % dd_duration)]
-    return stats
+    if direct == 'exit' and cur_qty > 0:
+      action = 'sell'
