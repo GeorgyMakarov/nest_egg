@@ -45,7 +45,6 @@ class csv_handler(data_handler):
       self.history[s] = pd.read_csv(s_file)
       self.history[s].set_index('Unnamed: 0', inplace=True)
       self.history[s].index.name = None
-      print(f"Symbol: {s}, loaded = {self.history[s].shape[0]}")
       if self.date_idx is None:
         self.date_idx = self.history[s].index.tolist()
       else:
@@ -68,7 +67,6 @@ class csv_handler(data_handler):
       self.history[s]['returns'] = np.where(self.history[s]['returns'] == 0, 
                                             0.00001, 
                                             self.history[s]['returns'])
-      print(f"Symbol: {s}, filled gaps = {self.history[s].shape[0]}")
   
   def _create_iterator(self):
     for s in self.tickers:

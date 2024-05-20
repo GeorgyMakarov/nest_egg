@@ -4,6 +4,8 @@
 import datetime
 import queue
 
+import pandas as pd
+
 class backtest(object):
   def __init__(self, tickers, folder, start, init_cap, handler, portfolio, strategy):
     self.tickers  = tickers
@@ -50,4 +52,6 @@ class backtest(object):
               self.portfolio.update_signal(event)
   
   def _generate_results(self):
-    pass
+    physical_inventory = pd.DataFrame(self.portfolio.all_pos)
+    balance_sheet = pd.DataFrame(self.portfolio.all_hold)
+    print(balance_sheet.head(15))
