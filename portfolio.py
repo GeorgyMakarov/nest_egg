@@ -101,8 +101,19 @@ class portfolio(object):
     self.cur_pos[ticker] += trans_qty
   
   def sell_transaction(self, comission, trans_qty, price, ticker):
-    pass
-
+    market_value = round(trans_qty * price, 2)
+    income = round(market_value - comission, 2)
+    self.cur_hold['inventory'] = 0
+    self.cur_hold['cash'] += income
+    self.cur_hold['profit'] = self.cur_hold['inventory'] +\
+                              self.cur_hold['cash'] -\
+                              self.cur_hold['capital']
+    self.cur_hold['balance_check'] = self.cur_hold['inventory'] +\
+                                     self.cur_hold['cash'] -\
+                                     self.cur_hold['capital'] -\
+                                     self.cur_hold['profit']
+    self.cur_pos[ticker] += 0
+    
   def update_signal(self, event):
     direct  = event.sig_type
     ticker  = event.ticker

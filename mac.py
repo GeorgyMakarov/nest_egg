@@ -9,7 +9,7 @@ from strategy import strategy
 from events   import signal_event
 
 class mac(strategy):
-  def __init__(self, events, handler, short_window=5, long_window=10):
+  def __init__(self, events, handler, short_window=100, long_window=400):
     self.events  = events
     self.handler = handler
     self.tickers = self.handler.tickers
