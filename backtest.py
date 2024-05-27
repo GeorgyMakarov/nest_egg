@@ -78,7 +78,6 @@ class backtest(object):
     balance_sheet['returns'] = balance_sheet['equity'].pct_change()
     balance_sheet.fillna(value=0.0, inplace=True)
     balance_sheet['equity_curve'] = (1.0 + balance_sheet['returns']).cumprod()
-    balance_sheet.drop_duplicates(keep='last', inplace=True)
     return balance_sheet
 
   def _output_summary(self, balance_sheet, base_rate=0.002):
@@ -87,7 +86,7 @@ class backtest(object):
     drawdown, max_dd, dd_duration = compute_drawdowns(balance_sheet['returns'])    
     npv_power = balance_sheet.shape[0] / 365
     npv_denom = (1 + base_rate) ** npv_power
-    cash_flow = balance_sheet['profit'][-1]
+    cash_flow = balance_sheet['profit'][-1] + balance_sheet['capital'][-1]
     npv_val = (cash_flow / npv_denom) - self.init_cap
 
     print("Total return = ", "%0.2f%%" % ((total_return - 1.0) * 100.00))
@@ -101,12 +100,11 @@ class backtest(object):
     tmp = pd.DataFrame(self.signal_list)
     tmp.columns = ['datetime', 'direction', 'price']
     self.signal_df = tmp.copy()
-    print(tmp)
 
   def _generate_results(self):
     physical_inventory = pd.DataFrame(self.portfolio.all_pos)
     balance_sheet = pd.DataFrame(self.portfolio.all_hold)
     balance_sheet = self._create_balance_sheet(balance_sheet)
-    plot_equity(balance_sheet, self.all_pos, self.signal_df)
+    plot_equity(balance_sheet, self.portfolio.all_pos, self.signal_df)
     self._output_summary(balance_sheet)
     self._output_signals()

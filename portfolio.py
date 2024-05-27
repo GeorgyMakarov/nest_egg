@@ -69,21 +69,12 @@ class portfolio(object):
   def _compute_qty(self, ticker, price):
     res   = 0.0
     cash  = self.cur_hold['cash']
-    min_cost  = 3.76
-    norm_cost = 0.08 / 100
-    # Use comission value that is higher by choosing the
-    # available quantity that is lower
-    q1 = floor((cash - min_cost) / price)
-    q2 = floor(cash / (price + norm_cost))
-    res = min(q1, q2)
+    commission = 3.76
+    res = floor((cash - commission) / price)
     return res
   
   def _compute_comission(self, qty):
-    min_cost = 3.76
-    norm_cost = 0.08 / 100
-    cost = 0.0
-    if qty > 0:
-      cost = max(min_cost, norm_cost * qty)
+    cost = 3.76
     return cost
 
   def buy_transaction(self, comission, trans_qty, price, ticker):
@@ -112,7 +103,7 @@ class portfolio(object):
                                      self.cur_hold['cash'] -\
                                      self.cur_hold['capital'] -\
                                      self.cur_hold['profit']
-    self.cur_pos[ticker] += 0
+    self.cur_pos[ticker] = 0
     
   def update_signal(self, event):
     direct  = event.sig_type
