@@ -8,12 +8,10 @@ import matplotlib.pyplot as plt
 
 def plot_equity(bs, pos_history, signal_history):
   s1 = bs['equity_curve']
-  s2 = bs['equity_curve'] * 0.7 # TODO: replace this with baseline
   dates = s1.index
   fig, ax = plt.subplots()
   ax.plot(dates, s1, color='green', label='strategy')
-  ax.plot(dates, s2, color='grey', label='base line')
-  ax.set(xlabel='Date', ylabel='Equity', title='Strategy vs Baseline')
+  ax.set(xlabel='Date', ylabel='Equity', title='Equity curve')
   plt.xticks(rotation=90)
   plt.legend()
   plt.tight_layout()

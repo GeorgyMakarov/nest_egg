@@ -30,6 +30,10 @@ class csv_handler(data_handler):
 
     self.history     = {}
     self.latest_data = {}
+
+    self.base_buy_price  = {}
+    self.base_sell_price = {}
+
     self.continue_backtest = True
 
     self.date_idx     = None
@@ -67,6 +71,9 @@ class csv_handler(data_handler):
       self.history[s]['returns'] = np.where(self.history[s]['returns'] == 0, 
                                             0.00001, 
                                             self.history[s]['returns'])
+      start_date = self.start.strftime('%Y-%m-%d')
+      self.base_buy_price[s]  = self.history[s]['adj_close'][start_date]
+      self.base_sell_price[s] = self.history[s]['adj_close'][-1]
   
   def _create_iterator(self):
     for s in self.tickers:
