@@ -13,15 +13,12 @@ from performance import compute_sharpe_ratio
 from performance import compute_drawdowns
 
 class backtest(object):
-  def __init__(self, tickers, folder, start, init_cap, short_window, 
-               long_window, handler, portfolio, strategy):
+  def __init__(self, tickers, folder, start, init_cap, 
+               handler, portfolio, strategy):
     self.tickers  = tickers
     self.folder   = folder
     self.start    = start
     self.init_cap = init_cap
-
-    self.short_window = short_window
-    self.long_window  = long_window
 
     self.handler_cls   = handler
     self.portfolio_cls = portfolio
@@ -37,8 +34,7 @@ class backtest(object):
   def _generate_instances(self):
     self.handler   = self.handler_cls(self.events, self.folder, 
                                       self.tickers, self.start)
-    self.strategy  = self.strategy_cls(self.events, self.handler, 
-                                       self.short_window, self.long_window)
+    self.strategy  = self.strategy_cls(self.events, self.handler)
     self.portfolio = self.portfolio_cls(self.events, self.handler, 
                                         self.start, self.init_cap)
   
