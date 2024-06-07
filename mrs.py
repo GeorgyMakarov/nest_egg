@@ -11,7 +11,7 @@ from events   import signal_event
 import statsmodels.api as sm
 
 class mean_reverting(strategy):
-  def __init__(self, events, handler, ols_w=100, z_low=0.5, z_high=3.0):
+  def __init__(self, events, handler, ols_w=115, z_low=0.5, z_high=3.0):
     self.events  = events
     self.handler = handler
     self.tickers = self.handler.tickers
@@ -59,8 +59,6 @@ class mean_reverting(strategy):
         z_last = ( (spread - spread.mean())/spread.std() )[-1]
         y_signal, x_signal = self.calculate_xy_signals(z_last, y, x)
         if y_signal is not None and x_signal is not None:
-          print(f"Date: {x_signal.dt}, px = {x_signal.price:.2f}, sx = {x_signal.sig_type}, powx = {x_signal.sig_str:.3f}")
-          print(f"Date: {y_signal.dt}, py = {y_signal.price:.2f}, sy = {y_signal.sig_type}, powy = {y_signal.sig_str:.3f}")
           self.events.put(y_signal)
           self.events.put(x_signal)
 

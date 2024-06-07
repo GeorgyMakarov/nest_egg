@@ -16,3 +16,20 @@ class signal_event(event):
     self.sig_type = sig_type
     self.sig_str  = sig_str
     self.price    = price
+
+class order_event(event):
+  def __init__(self, ticker, quantity, direction, price):
+    self.type = 'order'
+    self.ticker = ticker
+    self.quantity = quantity
+    self.direction = direction
+    self.price = price
+
+class fill_event(event):
+  def __init__(self, ticker, quantity, direction, price):
+    self.type = 'fill'
+    self.ticker = ticker
+    self.quantity = quantity
+    self.direction = direction
+    self.price = price
+    self.commission = 3.76
