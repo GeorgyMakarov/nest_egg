@@ -32,4 +32,8 @@ class fill_event(event):
     self.quantity = quantity
     self.direction = direction
     self.price = price
-    self.commission = 3.76
+
+    com1 = 3.76
+    com2 = self.price * self.quantity * 0.08 * 0.01
+
+    self.commission = max([com1, com2])

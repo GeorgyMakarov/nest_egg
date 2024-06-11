@@ -69,7 +69,7 @@ class portfolio(object):
       dh[t] = mv
       dh['total'] += mv
     self.all_hold.append(dh)
-  
+
   def generate_naive_order(self, signal):
     order = None
     
@@ -77,7 +77,7 @@ class portfolio(object):
     direction = signal.sig_type
     strength  = signal.sig_str
     price = signal.price
-    market_qty  = floor(100 * strength)
+    market_qty  = floor(220 * strength)
     current_qty = self.cur_pos[ticker]
 
     if direction == 'long' and current_qty == 0:
@@ -119,4 +119,3 @@ class portfolio(object):
     self.cur_hold['commission'] += fill.commission
     self.cur_hold['cash'] -= (amount + fill.commission)
     self.cur_hold['total'] -= (amount + fill.commission)
-

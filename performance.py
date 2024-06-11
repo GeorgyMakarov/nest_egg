@@ -20,10 +20,21 @@ def plot_equity(holdings):
   npv = compute_npv(hold_df)
 
   s1 = hold_df['equity_curve']
+  s2 = hold_df['cash']
   dates = s1.index
   fig, ax = plt.subplots()
   ax.plot(dates, s1, color='green', label='strategy')
   ax.set(xlabel='Date', ylabel='Equity', title='Equity curve')
+  plt.xticks(rotation=90)
+  plt.legend()
+  plt.tight_layout()
+  plt.show()
+
+  print()
+
+  fig, ax = plt.subplots()
+  ax.plot(dates, s2, color='darkgrey', label='cash')
+  ax.set(xlabel='Date', ylabel='Cash', title='Cash')
   plt.xticks(rotation=90)
   plt.legend()
   plt.tight_layout()
@@ -34,7 +45,6 @@ def plot_equity(holdings):
   print(f"Max drawdown = {max_dd*100:.2f}%")
   print(f"Drawdown duration = {dd_duration}")
   print(f"NPV = {npv:.2f}")
-
 
 def compute_sharpe_ratio(returns):
   return np.sqrt(252) * (np.mean(returns)) / np.std(returns)
