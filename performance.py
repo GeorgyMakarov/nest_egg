@@ -16,28 +16,56 @@ def plot_equity(holdings):
 
   sharpe_ratio = compute_sharpe_ratio(hold_df['returns'])
   drawdown, max_dd, dd_duration = compute_drawdowns(hold_df['returns'])
+  hold_df['drawdown'] = drawdown
   total_return = hold_df['equity_curve'][-1]
   npv = compute_npv(hold_df)
 
   s1 = hold_df['equity_curve']
   s2 = hold_df['cash']
+  s3 = hold_df['returns']
+  s4 = hold_df['drawdown']
+
   dates = s1.index
   fig, ax = plt.subplots()
-  ax.plot(dates, s1, color='green', label='strategy')
+  ax.plot(dates, s1, color='darkgreen', label='strategy')
   ax.set(xlabel='Date', ylabel='Equity', title='Equity curve')
   plt.xticks(rotation=90)
   plt.legend()
   plt.tight_layout()
+  plt.grid(True)
   plt.show()
 
   print()
 
   fig, ax = plt.subplots()
-  ax.plot(dates, s2, color='darkgrey', label='cash')
+  ax.plot(dates, s2, color='navy', label='cash')
   ax.set(xlabel='Date', ylabel='Cash', title='Cash')
   plt.xticks(rotation=90)
   plt.legend()
   plt.tight_layout()
+  plt.grid(True)
+  plt.show()
+  
+  print()
+
+  fig, ax = plt.subplots()
+  ax.plot(dates, s3, color='darkgreen', label='returns')
+  ax.set(xlabel='Date', ylabel='Returns', title='Daily returns')
+  plt.xticks(rotation=90)
+  plt.legend()
+  plt.tight_layout()
+  plt.grid(True)
+  plt.show()
+
+  print()
+
+  fig, ax = plt.subplots()
+  ax.plot(dates, s4, color='darkgreen', label='drawdown')
+  ax.set(xlabel='Date', ylabel='Drawdown', title='Drawdown')
+  plt.xticks(rotation=90)
+  plt.legend()
+  plt.tight_layout()
+  plt.grid(True)
   plt.show()
 
   print(f"Total return = {(total_return - 1)*100:.2f}%")
