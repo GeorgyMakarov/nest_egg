@@ -6,6 +6,23 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 
+def add_result(holdings):
+  hold_df = pd.DataFrame(holdings)
+  hold_df.drop_duplicates(inplace=True)
+  hold_df.set_index('datetime', inplace=True)
+  hold_df['returns'] = hold_df['total'].pct_change()
+  hold_df.fillna(0, inplace=True)
+  hold_df['equity_curve'] = (1.0 + hold_df['returns']).cumprod()
+  sharpe_ratio = compute_sharpe_ratio(hold_df['returns'])
+  drawdown, max_dd, dd_duration = compute_drawdowns(hold_df['returns'])
+  hold_df['drawdown'] = drawdown
+  total_return = hold_df['equity_curve'][-1]
+  npv = compute_npv(hold_df)
+  return {'ret': round((total_return - 1)*100, 2), 
+          'sharpe': round(sharpe_ratio, 2), 
+          'max_dd': round(max_dd*100, 2), 
+          'dur_dd': int(dd_duration)}
+
 def plot_equity(holdings):
   hold_df = pd.DataFrame(holdings)
   hold_df.drop_duplicates(inplace=True)

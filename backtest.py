@@ -11,6 +11,7 @@ import pandas as pd
 from performance import plot_equity
 from performance import compute_sharpe_ratio
 from performance import compute_drawdowns
+from performance import add_result
 
 class backtest(object):
   def __init__(self, tickers, folder, start, init_cap, 
@@ -42,7 +43,7 @@ class backtest(object):
   
   def run_simulation(self):
     self._run_backtest()
-    self._generate_results()
+    self._generate_results(False)
   
   def _run_backtest(self):
     while True:
@@ -70,8 +71,11 @@ class backtest(object):
               self.fill_count += 1
               self.portfolio.update_fill(event)
 
-  def _generate_results(self):
-    print(f"Signals: {self.signal_count}")
-    print(f"Orders: {self.order_count}")
-    print(f"Fills: {self.fill_count}")
-    plot_equity(self.portfolio.all_hold)
+  def _generate_results(self, verbose=True):
+    if verbose == True:
+      print(f"Signals: {self.signal_count}")
+      print(f"Orders: {self.order_count}")
+      print(f"Fills: {self.fill_count}")
+      plot_equity(self.portfolio.all_hold)
+    else:
+      print(add_result(self.portfolio.all_hold))
