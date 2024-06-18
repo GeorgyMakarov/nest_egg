@@ -11,7 +11,7 @@ from events   import signal_event
 import statsmodels.api as sm
 
 class mean_reverting(strategy):
-  def __init__(self, events, handler, ols_w=119, z_low=0.25, z_high=3.0):
+  def __init__(self, events, handler, ols_w=119, z_low=0.28, z_high=2.80):
     self.events  = events
     self.handler = handler
     self.tickers = self.handler.tickers
