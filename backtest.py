@@ -15,11 +15,13 @@ from performance import add_result
 
 class backtest(object):
   def __init__(self, tickers, folder, start, init_cap, 
-               handler, execution_handler, portfolio, strategy):
+               handler, execution_handler, 
+               portfolio, strategy, params_d):
     self.tickers  = tickers
     self.folder   = folder
     self.start    = start
     self.init_cap = init_cap
+    self.params_d = params_d
 
     self.handler_cls   = handler
     self.portfolio_cls = portfolio
@@ -31,19 +33,44 @@ class backtest(object):
     self.fill_count   = 0
 
     self.events = queue.Queue()
-    self._generate_instances()
+    # self._generate_instances()
   
-  def _generate_instances(self):
+  def _generate_instances(self, params_d):
     self.handler   = self.handler_cls(self.events, self.folder, 
                                       self.tickers, self.start)
-    self.strategy  = self.strategy_cls(self.events, self.handler)
+    self.strategy  = self.strategy_cls(self.events, 
+                                       self.handler, **params_d)
     self.portfolio = self.portfolio_cls(self.events, self.handler, 
                                         self.start, self.init_cap)
     self.execution_handler = self.execution_handler_cls(self.events)
   
   def run_simulation(self):
-    self._run_backtest()
-    self._generate_results(False)
+    out = open('output_options.csv', 'w')
+    spl = len(self.params_d)
+    for i, sp in enumerate(self.params_d):
+      self._generate_instances(sp)
+      self._run_backtest()
+      stats = self._generate_results(False)
+      print("Step %s of %s: %s,%s,%s,%s,%s,%s,%s" % (
+        i+1, 
+        spl,
+        sp['ols_w'],
+        sp['z_low'],
+        sp['z_high'],
+        stats['ret'],
+        stats['sharpe'],
+        stats['max_dd'],
+        stats['dur_dd']
+      ))
+      out.write("%s,%s,%s,%s,%s,%s,%s\n" % (
+        sp['ols_w'],
+        sp['z_low'],
+        sp['z_high'],
+        stats['ret'],
+        stats['sharpe'],
+        stats['max_dd'],
+        stats['dur_dd']
+      ))
   
   def _run_backtest(self):
     while True:
@@ -78,4 +105,4 @@ class backtest(object):
       print(f"Fills: {self.fill_count}")
       plot_equity(self.portfolio.all_hold)
     else:
-      print(add_result(self.portfolio.all_hold))
+      return add_result(self.portfolio.all_hold)
