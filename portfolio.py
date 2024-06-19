@@ -81,12 +81,16 @@ class portfolio(object):
     current_qty = self.cur_pos[ticker]
 
     if direction == 'long' and current_qty == 0:
+      print(f"Ticker {ticker}: buy, {price:.2f}, {market_qty}")
       order = order_event(ticker, market_qty, 'buy', price)
     if direction == 'short' and current_qty == 0:
+      print(f"Ticker {ticker}: sell, {price:.2f}, {market_qty}")
       order = order_event(ticker, market_qty, 'sell', price)
     if direction == 'exit' and current_qty > 0:
+      print(f"Ticker {ticker}: sell, {price:.2f}, {abs(current_qty)}")
       order = order_event(ticker, abs(current_qty), 'sell', price)
     if direction == 'exit' and current_qty < 0:
+      print(f"Ticker {ticker}: buy, {price:.2f}, {abs(current_qty)}")
       order = order_event(ticker, abs(current_qty), 'buy', price)
     return order
 

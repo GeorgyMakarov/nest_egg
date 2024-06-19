@@ -43,7 +43,7 @@ class backtest(object):
   
   def run_simulation(self):
     self._run_backtest()
-    self._generate_results(False)
+    self._generate_results(True)
   
   def _run_backtest(self):
     while True:
