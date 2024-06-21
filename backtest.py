@@ -54,22 +54,28 @@ class backtest(object):
       print("Step %s of %s: %s,%s,%s,%s,%s,%s,%s" % (
         i+1, 
         spl,
-        sp['ols_w'],
-        sp['z_low'],
-        sp['z_high'],
+        sp['short_window'],
+        sp['long_window'],
+        # sp['ols_w'],
+        # sp['z_low'],
+        # sp['z_high'],
         stats['ret'],
         stats['sharpe'],
         stats['max_dd'],
-        stats['dur_dd']
+        stats['dur_dd'],
+        'mac'
       ))
       out.write("%s,%s,%s,%s,%s,%s,%s\n" % (
-        sp['ols_w'],
-        sp['z_low'],
-        sp['z_high'],
+        sp['short_window'],
+        sp['long_window'],
+        # sp['ols_w'],
+        # sp['z_low'],
+        # sp['z_high'],
         stats['ret'],
         stats['sharpe'],
         stats['max_dd'],
-        stats['dur_dd']
+        stats['dur_dd'],
+        'mac'
       ))
   
   def _run_backtest(self):

@@ -77,7 +77,7 @@ class portfolio(object):
     direction = signal.sig_type
     strength  = signal.sig_str
     price = signal.price
-    market_qty  = floor(220 * strength)
+    market_qty  = floor(100 * strength)
     current_qty = self.cur_pos[ticker]
 
     if direction == 'long' and current_qty == 0:
