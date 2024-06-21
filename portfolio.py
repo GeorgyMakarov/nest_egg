@@ -77,20 +77,20 @@ class portfolio(object):
     direction = signal.sig_type
     strength  = signal.sig_str
     price = signal.price
-    market_qty  = floor(220 * strength)
+    market_qty  = floor(20 * strength)
     current_qty = self.cur_pos[ticker]
 
     if direction == 'long' and current_qty == 0:
-      print(f"Ticker {ticker}: buy, {price:.2f}, {market_qty}")
+      print(f"Ticker {ticker}: long, buy, {price:.2f}, {market_qty}")
       order = order_event(ticker, market_qty, 'buy', price)
     if direction == 'short' and current_qty == 0:
-      print(f"Ticker {ticker}: sell, {price:.2f}, {market_qty}")
+      print(f"Ticker {ticker}: short, sell, {price:.2f}, {market_qty}")
       order = order_event(ticker, market_qty, 'sell', price)
     if direction == 'exit' and current_qty > 0:
-      print(f"Ticker {ticker}: sell, {price:.2f}, {abs(current_qty)}")
+      print(f"Ticker {ticker}: exit, sell, {price:.2f}, {abs(current_qty)}")
       order = order_event(ticker, abs(current_qty), 'sell', price)
     if direction == 'exit' and current_qty < 0:
-      print(f"Ticker {ticker}: buy, {price:.2f}, {abs(current_qty)}")
+      print(f"Ticker {ticker}: exit, buy, {price:.2f}, {abs(current_qty)}")
       order = order_event(ticker, abs(current_qty), 'buy', price)
     return order
 

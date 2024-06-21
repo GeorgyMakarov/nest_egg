@@ -36,6 +36,7 @@ def plot_equity(holdings):
   hold_df['drawdown'] = drawdown
   total_return = hold_df['equity_curve'][-1]
   npv = compute_npv(hold_df)
+  hold_df.to_excel('holdings.xlsx', index=False)
 
   s1 = hold_df['equity_curve']
   s2 = hold_df['cash']
