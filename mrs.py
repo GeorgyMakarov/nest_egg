@@ -18,7 +18,7 @@ class mean_reverting(strategy):
     self.ols_w = ols_w
     self.z_low  = z_low
     self.z_high = z_high
-    self.pair   = ('CSPX_L', 'XLI')
+    self.pair   = ('CSPX_L', 'CSUSS_SW')
     self.long_market  = False
     self.short_market = False
     self.hedge_ratio  = None
