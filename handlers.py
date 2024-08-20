@@ -63,8 +63,8 @@ class csv_handler(data_handler):
                            left_index=True, 
                            right_index=True, 
                            how='left')
-      new_frame.fillna(method='ffill', inplace=True)
-      new_frame.fillna(method='bfill', inplace=True)
+      new_frame.ffill(inplace=True)
+      new_frame.bfill(inplace=True)
       self.history[s] = new_frame.copy()
       self.history[s]['returns'] = self.history[s]['adj_close'].pct_change()
       self.history[s].fillna(value=0.0, inplace=True)
@@ -73,7 +73,7 @@ class csv_handler(data_handler):
                                             self.history[s]['returns'])
       start_date = self.start.strftime('%Y-%m-%d')
       self.base_buy_price[s]  = self.history[s]['adj_close'][start_date]
-      self.base_sell_price[s] = self.history[s]['adj_close'][-1]
+      self.base_sell_price[s] = self.history[s]['adj_close'].iloc[-1]
   
   def _create_iterator(self):
     for s in self.tickers:

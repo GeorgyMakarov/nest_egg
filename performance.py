@@ -16,7 +16,7 @@ def add_result(holdings):
   sharpe_ratio = compute_sharpe_ratio(hold_df['returns'])
   drawdown, max_dd, dd_duration = compute_drawdowns(hold_df['returns'])
   hold_df['drawdown'] = drawdown
-  total_return = hold_df['equity_curve'][-1]
+  total_return = hold_df['equity_curve'].iloc[-1]
   npv = compute_npv(hold_df)
   return {'ret': round((total_return - 1)*100, 2), 
           'sharpe': round(sharpe_ratio, 2), 
@@ -34,7 +34,7 @@ def plot_equity(holdings):
   sharpe_ratio = compute_sharpe_ratio(hold_df['returns'])
   drawdown, max_dd, dd_duration = compute_drawdowns(hold_df['returns'])
   hold_df['drawdown'] = drawdown
-  total_return = hold_df['equity_curve'][-1]
+  total_return = hold_df['equity_curve'].iloc[-1]
   npv = compute_npv(hold_df)
   hold_df.to_excel('holdings.xlsx', index=False)
 
@@ -101,13 +101,13 @@ def compute_drawdowns(returns):
   drawdown = pd.Series(index = idx)
   duration = pd.Series(index = idx)
   for t in range(1, len(idx)):
-    hwm.append(max(hwm[t - 1], returns[t]))
-    drawdown[t] = (hwm[t] - returns[t])
-    duration[t] = (0 if drawdown[t] == 0 else duration[t-1] + 1)
+    hwm.append(max(hwm[t - 1], returns.iloc[t]))
+    drawdown.iloc[t] = (hwm[t] - returns.iloc[t])
+    duration.iloc[t] = (0 if drawdown.iloc[t] == 0 else duration.iloc[t-1] + 1)
   return drawdown, drawdown.max(), duration.max()
 
 def compute_npv(holdings):
   daily_rate = 0.25*0.01 / 365
   periods = holdings.shape[0]
   discount_factor = (1 + daily_rate) ** periods
-  return (holdings['total'][-1] - holdings['total'][0]) / discount_factor
+  return (holdings['total'].iloc[-1] - holdings['total'].iloc[0]) / discount_factor
