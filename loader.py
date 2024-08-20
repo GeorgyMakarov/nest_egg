@@ -35,4 +35,5 @@ def get_yf_tickers(tickers, folder, start, end=None, gog=True):
     file_name = re.sub('\.', '_', t.upper()) + '.csv'
     data.to_csv(folder + file_name)
     if gog == True:
+      from google.colab import files
       files.download(file_name)
