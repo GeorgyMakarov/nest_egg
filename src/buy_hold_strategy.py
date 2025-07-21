@@ -1,6 +1,8 @@
 import numpy as np
 import polars as pl
 import sys
+from src.sharpe_ratio import sharpe_ratio
+from src.log_return import compute_log_returns
 
 class BuyHoldStrategy:
   def __init__(self, budget, increment, commission, logger):
@@ -13,12 +15,14 @@ class BuyHoldStrategy:
     self.invested = budget
     self.latest_signal = None
     self.last_price = None
+    self.ticker = None
 
   def compute_strategy(self, ticker, df, args):
     """
     Computes strategy output for a buy-and-hold strategy, produces today's 
     signal.
     """
+    self.ticker = ticker.upper()
     self.logger.info(f"Computing strategy for: {ticker.upper()}")
     df = df.with_columns([pl.col('date').str.to_date("%Y-%m-%d").alias('date')])
     df = df.sort('date')
@@ -40,9 +44,10 @@ class BuyHoldStrategy:
     self.logger.info(f"Rows after NaN dropped {df.height}")
 
     balances = np.zeros(df.height)
-
+    self.logger.info(f"Beginning: budget = {self.budget}, invested = {self.invested}")
     for i in range(1, df.height):
-      self.budget += self.increment
+      
+      self.budget   += self.increment
       self.invested += self.increment
       
       close_price_current = (
@@ -68,7 +73,7 @@ class BuyHoldStrategy:
         shares_to_buy = int(self.budget / price_incl_commission)
         payment = np.round(price_incl_commission * shares_to_buy, 2)
         if self.budget - payment >= 0:
-          self.budget -= payment
+          self.budget  -= payment
           self.balance += shares_to_buy
           self.transaction_counter += 1
       if self.budget < 0:
@@ -82,9 +87,10 @@ class BuyHoldStrategy:
       self.logger.error("Len Balances and DF height mismatch...")
       sys.exit(1)
     self.last_price = df.select(pl.col('price').last()).item()
+    self.logger.info(f"Closing: budget = {self.budget:.2f}, invested = {self.invested:.2f}")
     return df
     
-  def evaluate_strategy(self, trades, row):
+  def evaluate_strategy(self, trades, row, baseline):
     sales_price = self.last_price * (1 + self.commission['transaction'])
     sales = np.round(sales_price * self.balance, 2)
     self.budget += sales
@@ -92,28 +98,19 @@ class BuyHoldStrategy:
     # portfolio and total investments, where the former is calculated as if sold
     # at the last date of trading, and the latter is a sum of all increments.
     total_return = 100 * (self.budget - self.invested) / self.invested
-    # Compute normalized equity curve filtering out zero balance values and using
-    # the first value as a normalization constant.
-    temp = trades.clone()
+    # Compute annualized Sharpe ratio using the baseline
+    baseline = baseline.rename({'price': 'baseline'})
+    col   = 'date'
+    forma = "%Y-%m-%d"
+    baseline = baseline.with_columns(pl.col(col).str.strptime(pl.Date, forma))
+    temp = trades.join(baseline, on='date', how='left')
     temp = temp.filter(pl.col('balance') > 0)
-    self.logger.info(f"Filter {trades.height - temp.height} rows with 0 bs...")
-    first_row = temp.select(pl.col(['price', 'balance']).first())
-    nor_c = np.round(first_row['price'].item() * first_row['balance'].item(), 2)
-    temp = temp.with_columns((pl.col("price") * pl.col("balance") / nor_c).alias("norm_value"))
-    temp = temp.with_columns((pl.col('price') * pl.col('balance')).alias('bs_amount'))
-    temp = temp.with_columns((pl.col("bs_amount").pct_change()).alias('returns'))
-    # Assume an average annual Sharpe ratio based on the excess daily returns
-    temp = temp.with_columns((pl.col('returns') - 0.02 / 252).alias('excess_returns'))
-    ret_col = ['returns', 'excess_returns']
-    temp = temp.with_columns(pl.col(ret_col).fill_null(strategy='zero'))
-    ex_ret = temp['excess_returns'].to_numpy()
-    # Rule of thumb:
-    # Annual Sharpe < 1 -- bad
-    # 1 <= Annual Sharpe < 2 -- somewhat acceptable
-    # Annual Sharpe >= 2 -- good
-    annual_sharpe = np.sqrt(252) * ex_ret.mean() / ex_ret.std()
+    ra, rb = compute_log_returns(temp)
+    sharpe = sharpe_ratio(ra, rb, 252).item()
+    self.logger.info(f"Ticker {self.ticker} Sharpe ratio = {sharpe:.3f}")
     # Create drawdowns as the largest peak-to-trough drawdown of the PnL curve
     # as well as the duration of the drawdown.
+    temp = temp.with_columns((pl.col('price') * pl.col('balance')).alias('bs_amount'))
     temp = temp.with_columns([
       pl.col('bs_amount').cum_max().alias('running_max'),
       (pl.col('bs_amount') - pl.col('bs_amount').cum_max()).alias('drawdown'),
@@ -137,12 +134,13 @@ class BuyHoldStrategy:
     )
     duration = duration['count'].max()
     drawback = np.abs(temp['drawdown_pct'].min())
+    self.logger.info(f"Ticker {self.ticker}: drawback = {drawback:.2f}, duration = {duration}")
     res = {
-      'ticker': row.upper(),
-      'total_ret': total_return,
-      'sharpe': annual_sharpe,
+      'ticker': self.ticker,
+      'total_ret_pct': total_return,
+      'sharpe': sharpe,
       'drawback_pct': drawback,
-      'duration': duration,
+      'duration_days': duration,
       'transactions': self.transaction_counter,
       'last_buy': self.latest_signal[0],
       'last_signal': self.latest_signal[1]

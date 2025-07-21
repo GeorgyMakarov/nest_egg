@@ -13,7 +13,7 @@ class DataLoader:
   def get_tickers(self, args_vals):
     if hasattr(args_vals, 'test'):
       self.count = 3 if args_vals.test == 'y' else self.count
-      self.bs = 10 if args_vals.test == 'y' else self.bs      
+      self.bs = 100 if args_vals.test == 'y' else self.bs      
       self.log.info(f"Running in test mode, loading {self.count} tickers...")
       self.log.info(f"Defaulting to batch size: {self.bs}")
     if hasattr(args_vals, 'cat'):
@@ -32,5 +32,3 @@ class DataLoader:
     sch_over = {'date': pl.Utf8, 'price': pl.Float64}
     history = batch_query_to_df(self.db, query, sch_over, self.bs, self.f_log)
     return history
-
-
