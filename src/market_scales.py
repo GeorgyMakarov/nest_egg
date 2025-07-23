@@ -23,6 +23,7 @@ class MarketScales:
       pl.lit(datetime.now()).alias('run_id')
     ])
     df = df.with_columns(pl.col("run_id").dt.truncate("1s").alias("run_id"))
+    df = df.with_columns(pl.lit(self.ma).alias('ma'))
     if self.test == 'n':
       batch_df_to_sql(con_str, 'buy_hold', df, 1000, self.logger)
     
