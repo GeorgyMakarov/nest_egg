@@ -32,3 +32,12 @@ class DataLoader:
     sch_over = {'date': pl.Utf8, 'price': pl.Float64}
     history = batch_query_to_df(self.db, query, sch_over, self.bs, self.f_log)
     return history
+  
+  def get_ttm(self, id, after):
+    """
+    Get history for 12 trailing months.
+    """
+    query = f"SELECT price_date AS [date], close_price AS price FROM daily_price WHERE symbol_id = {id} AND price_date >= '{after}' GROUP BY price_date ORDER BY price_date;"
+    sch_over = {'date': pl.Utf8, 'price': pl.Float64}
+    dt = batch_query_to_df(self.db, query, sch_over, 1000, self.f_log)
+    return dt
